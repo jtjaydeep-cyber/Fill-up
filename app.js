@@ -4,6 +4,17 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 let currentUserId = null;
+if (type === 'signup') {
+  res = await supabase.auth.signUp({ email, password });
+  if (res.error) {
+    alert(res.error.message);
+  } else if (!res.data.session) {
+    alert("Sign-up successful! Please check your email inbox to confirm your account before logging in.");
+  } else {
+    alert("Account created and logged in!");
+    location.reload();
+  }
+}
 
 // Load user session on startup & update UI balance
 window.addEventListener('load', async () => {
