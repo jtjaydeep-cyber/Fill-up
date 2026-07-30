@@ -82,8 +82,8 @@
             <input type="password" id="authPassword" class="form-control" placeholder="******" />
           </div>
           <div class="d-flex gap-2 mt-4">
-            <button class="btn btn-primary flex-fill" onclick="handleAuth('login')">Log In</button>
-            <button class="btn btn-success flex-fill" onclick="handleAuth('signup')">Sign Up</button>
+            <button type="button" class="btn btn-primary flex-fill" onclick="handleAuth('login')">Log In</button>
+            <button type="button" class="btn btn-success flex-fill" onclick="handleAuth('signup')">Sign Up</button>
           </div>
         </div>
       </div>
@@ -96,11 +96,18 @@
   <!-- Application Logic -->
   <script>
     const SUPABASE_URL = 'https://eocxrlmidikrxfpghzwl.supabase.co';
-    // ⚠️ Replace this string with your exact long Supabase anon key (starts with eyJ...)
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVvY3hybG1pZGlrcnhmcGdoendsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUzODkxOTIsImV4cCI6MjEwMDk2NTE5Mn0.a5lkA3HIsd1Mh7pEJljoL1UN_jk7HE_ddcQ4wSvpiKs';
+    
+    // ⚠️ Replace this exact string with your anon key from Supabase (starts with eyJ...)
+    const SUPABASE_ANON_KEY = 'PASTE_YOUR_EXACT_SUPABASE_KEY_HERE';
 
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    let supabase;
     let currentUserId = null;
+
+    try {
+      supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    } catch (e) {
+      alert("Supabase Init Error: " + e.message);
+    }
 
     window.addEventListener('load', async () => {
       await checkUserSession();
@@ -108,7 +115,7 @@
 
     async function checkUserSession() {
       try {
-        const { data: { user } } = await supabase.auth.getUser();
+        const { data: { user }, error } = await supabase.auth.getUser();
         if (user) {
           currentUserId = user.id;
           document.getElementById('userEmail').innerText = user.email;
@@ -147,8 +154,6 @@
 
         if (res.error) {
           alert("Auth Error: " + res.error.message);
-        } else if (type === 'signup' && !res.data.session) {
-          alert("Sign-up successful!");
         } else {
           alert("Success! Logging in...");
           location.reload();
@@ -164,7 +169,7 @@
     }
 
     async function fetchCreditBalance(userId) {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('profiles')
         .select('credits_balance')
         .eq('id', userId)
@@ -223,13 +228,6 @@
         .eq('id', userId);
 
       if (updateError) throw new Error("Failed to deduct credits.");
-
-      await supabase.from('service_logs').insert({
-        user_id: userId,
-        service_code: serviceCode,
-        credits_used: cost,
-        form_payload: payload
-      });
 
       return updatedCredits;
     }
