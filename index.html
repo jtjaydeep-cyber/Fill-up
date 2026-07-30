@@ -1,180 +1,164 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Legal & Tax Automation Engine</title>
-  
-  <!-- Bootstrap 5 CSS & JS -->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Citizen Services Platform</title>
 
-  <!-- Supabase CDN -->
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <!-- Supabase JS CDN -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  
-  <!-- PDF-Lib CDN -->
-  <script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
-
-  <style>
-    body { background-color: #f8f9fa; }
-    .card { border-radius: 12px; }
-    .form-control-sm { border-radius: 6px; }
-  </style>
+  <!-- pdf-lib CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
 </head>
-<body class="p-2 p-md-4">
+<body class="bg-light">
 
-  <div class="container max-w-md mx-auto" style="max-width: 600px;">
-    
-    <!-- User Status & Live Credit Header -->
-    <div class="d-flex justify-content-between align-items-center mb-3 p-3 bg-white rounded shadow-sm">
-      <div>
-        <h6 class="mb-0 fw-bold text-dark">🚗 Citizen Services Platform</h6>
-        <small class="text-muted" id="userEmail">Checking session...</small>
-      </div>
-      <div class="d-flex align-items-center gap-2">
-        <span class="badge bg-success fs-6 py-2 px-3" id="creditDisplay">Credits: --</span>
-        <button class="btn btn-outline-primary btn-sm" id="authBtn" data-bs-toggle="modal" data-bs-target="#authModal">Login</button>
+  <!-- Navbar -->
+  <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <div class="container">
+      <a class="navbar-brand" href="#">🚗 Citizen Services Platform</a>
+      <div class="d-flex align-items-center gap-3">
+        <span class="badge bg-success fs-6" id="creditDisplay">Credits: --</span>
+        <span class="text-white small" id="userEmail">Checking session...</span>
+        <button class="btn btn-outline-light btn-sm" id="authBtn" data-bs-toggle="modal" data-bs-target="#authModal">Login</button>
       </div>
     </div>
+  </nav>
 
-    <!-- Form Card: Parivahan Form 29 & 30 -->
-    <div class="card p-3 p-md-4 shadow-sm border-0 mb-4">
-      <div class="d-flex justify-content-between align-items-center mb-2">
-        <h5 class="fw-bold text-primary mb-0">Vehicle Ownership Transfer</h5>
-        <span class="badge bg-primary-subtle text-primary border border-primary-subtle">1 Credit</span>
-      </div>
-      <p class="text-muted small mb-3">Generates official Parivahan Form 29 (Notice of Transfer) & Form 30 (Application for Transfer).</p>
-
-      <form id="vTransferForm">
-        <!-- Section 1: Vehicle Details -->
-        <h6 class="text-secondary small fw-bold text-uppercase tracking-wider">1. Vehicle Details</h6>
-        <div class="row g-2 mb-2">
-          <div class="col-6">
-            <label class="form-label small text-muted mb-1">Reg Number</label>
-            <input type="text" id="regNo" class="form-control form-control-sm" placeholder="AS01AB1234" required>
+  <!-- Main Container -->
+  <div class="container my-4">
+    <div class="card shadow-sm p-4 mx-auto" style="max-width: 600px;">
+      <h4 class="mb-3 text-primary">Vehicle Ownership Transfer</h4>
+      <p class="text-muted small">Generates official Parivahan Form 29 & Form 30 for 1 Credit.</p>
+      
+      <form id="transferForm" onsubmit="event.preventDefault(); processVehicleTransfer();">
+        <h6 class="fw-bold mt-3">1. VEHICLE DETAILS</h6>
+        <div class="row g-2">
+          <div class="col-md-6">
+            <input type="text" id="regNo" class="form-control" placeholder="Reg Number (e.g. AS01AB1234)" required />
           </div>
-          <div class="col-6">
-            <label class="form-label small text-muted mb-1">Make & Model</label>
-            <input type="text" id="makeModel" class="form-control form-control-sm" placeholder="Swift / Activa" required>
+          <div class="col-md-6">
+            <input type="text" id="makeModel" class="form-control" placeholder="Make / Model" />
           </div>
-        </div>
-        <div class="row g-2 mb-2">
-          <div class="col-6">
-            <label class="form-label small text-muted mb-1">Chassis Number</label>
-            <input type="text" id="chassisNo" class="form-control form-control-sm" placeholder="Chassis No." required>
+          <div class="col-md-6">
+            <input type="text" id="chassisNo" class="form-control" placeholder="Chassis No." />
           </div>
-          <div class="col-6">
-            <label class="form-label small text-muted mb-1">Engine Number</label>
-            <input type="text" id="engineNo" class="form-control form-control-sm" placeholder="Engine No." required>
+          <div class="col-md-6">
+            <input type="text" id="engineNo" class="form-control" placeholder="Engine No." />
           </div>
         </div>
 
-        <!-- Section 2: Seller Details -->
-        <hr class="my-3">
-        <h6 class="text-secondary small fw-bold text-uppercase tracking-wider">2. Seller (Transferor) Details</h6>
-        <div class="mb-2">
-          <label class="form-label small text-muted mb-1">Full Name</label>
-          <input type="text" id="sellerName" class="form-control form-control-sm mb-2" placeholder="Seller Full Name" required>
-          <label class="form-label small text-muted mb-1">Full Address</label>
-          <input type="text" id="sellerAddress" class="form-control form-control-sm mb-2" placeholder="Seller Address" required>
-          <label class="form-label small text-muted mb-1">Current RTO Jurisdiction</label>
-          <input type="text" id="sellerRTO" class="form-control form-control-sm" placeholder="e.g. RTO Guwahati" required>
-        </div>
+        <h6 class="fw-bold mt-4">2. SELLER DETAILS</h6>
+        <div class="mb-2"><input type="text" id="sellerName" class="form-control" placeholder="Seller Full Name" required /></div>
+        <div class="mb-2"><input type="text" id="sellerAddress" class="form-control" placeholder="Seller Address" /></div>
+        <div class="mb-2"><input type="text" id="sellerRTO" class="form-control" placeholder="Seller RTO (e.g. RTO Guwahati)" /></div>
 
-        <!-- Section 3: Buyer Details -->
-        <hr class="my-3">
-        <h6 class="text-secondary small fw-bold text-uppercase tracking-wider">3. Buyer (Transferee) Details</h6>
-        <div class="mb-2">
-          <label class="form-label small text-muted mb-1">Full Name</label>
-          <input type="text" id="buyerName" class="form-control form-control-sm mb-2" placeholder="Buyer Full Name" required>
-          <label class="form-label small text-muted mb-1">Full Address</label>
-          <input type="text" id="buyerAddress" class="form-control form-control-sm mb-2" placeholder="Buyer Address" required>
-          <label class="form-label small text-muted mb-1">Target RTO Jurisdiction</label>
-          <input type="text" id="buyerRTO" class="form-control form-control-sm" placeholder="e.g. RTO Kamrup" required>
-        </div>
+        <h6 class="fw-bold mt-4">3. BUYER DETAILS</h6>
+        <div class="mb-2"><input type="text" id="buyerName" class="form-control" placeholder="Buyer Full Name" required /></div>
+        <div class="mb-2"><input type="text" id="buyerAddress" class="form-control" placeholder="Buyer Address" /></div>
+        <div class="mb-2"><input type="text" id="buyerRTO" class="form-control" placeholder="Buyer RTO" /></div>
 
-        <!-- Submit Button -->
-        <button type="button" class="btn btn-success w-100 btn-sm mt-3 py-2 fw-semibold" onclick="processVehicleTransfer()">
-          ⚡ Deduct 1 Credit & Download Form 29 & 30
-        </button>
+        <button type="submit" class="btn btn-primary w-100 mt-4 py-2">Generate Forms 29 & 30 (1 Credit)</button>
       </form>
     </div>
   </div>
 
-  <!-- Authentication Modal -->
-  <div class="modal fade" id="authModal" tabindex="-1">
+  <!-- Auth Modal -->
+  <div class="modal fade" id="authModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
-      <div class="modal-content">
-        <div class="modal-header">
+      <div class="modal-content p-3">
+        <div class="modal-header border-0">
           <h5 class="modal-title fw-bold">Sign In / Sign Up</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body">
           <div class="mb-3">
-            <label class="form-label small">Email address</label>
-            <input type="email" id="authEmail" class="form-control" placeholder="user@example.com">
+            <label class="form-label">Email address</label>
+            <input type="email" id="authEmail" class="form-control" placeholder="user@example.com" />
           </div>
           <div class="mb-3">
-            <label class="form-label small">Password</label>
-            <input type="password" id="authPassword" class="form-control" placeholder="••••••••">
+            <label class="form-label">Password</label>
+            <input type="password" id="authPassword" class="form-control" placeholder="******" />
           </div>
-          <div class="d-flex gap-2">
-            <button class="btn btn-primary w-50" onclick="handleAuth('login')">Log In</button>
-            <button class="btn btn-outline-success w-50" onclick="handleAuth('signup')">Sign Up (Free 10 Credits)</button>
+          <div class="d-flex gap-2 mt-4">
+            <button class="btn btn-primary flex-fill" onclick="handleAuth('login')">Log In</button>
+            <button class="btn btn-success flex-fill" onclick="handleAuth('signup')">Sign Up</button>
           </div>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- JavaScript Application Logic -->
-  <script>
-    const SUPABASE_URL = 'https://eocxrlmidikrxfpghzwl.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVvY3hybG1pZGlrcnhmcGdoendsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUzODkxOTIsImV4cCI6MjEwMDk2NTE5Mn0.a5lkA3HIsd1Mh7pEJljoL1UN_jk7HE_ddcQ4wSvpiKs';
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  <!-- Bootstrap JS Bundle -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/bootstrap.bundle.min.js"></script>
 
+  <!-- Application Logic -->
+  <script>
+    // 1. Initialize Supabase
+    const SUPABASE_URL = 'https://eocxrlmidikrxfpghzwl.supabase.co';
+    
+    // Paste your exact anon / publishable key here:
+    const SUPABASE_ANON_KEY = 'PASTE_YOUR_EXACT_SUPABASE_KEY_HERE';
+
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     let currentUserId = null;
 
+    // Check auth on load
     window.addEventListener('load', async () => {
-      checkUserSession();
+      await checkUserSession();
     });
 
     async function checkUserSession() {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        currentUserId = user.id;
-        document.getElementById('userEmail').innerText = user.email;
-        document.getElementById('authBtn').innerText = "Logout";
-        document.getElementById('authBtn').onclick = handleLogout;
-        document.getElementById('authBtn').removeAttribute('data-bs-toggle');
-        fetchCreditBalance(user.id);
-      } else {
-        document.getElementById('userEmail').innerText = "Not Logged In";
-        document.getElementById('creditDisplay').innerText = "Credits: 0";
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          currentUserId = user.id;
+          document.getElementById('userEmail').innerText = user.email;
+          const authBtn = document.getElementById('authBtn');
+          if (authBtn) {
+            authBtn.innerText = "Logout";
+            authBtn.removeAttribute('data-bs-toggle');
+            authBtn.onclick = handleLogout;
+          }
+          await fetchCreditBalance(user.id);
+        } else {
+          document.getElementById('userEmail').innerText = "Not Logged In";
+          document.getElementById('creditDisplay').innerText = "Credits: 0";
+        }
+      } catch (err) {
+        console.error("Session Check Error:", err);
       }
     }
 
+    // Unified Auth Handler
     async function handleAuth(type) {
-      const email = document.getElementById('authEmail').value;
+      const email = document.getElementById('authEmail').value.trim();
       const password = document.getElementById('authPassword').value;
 
       if (!email || !password) {
-        alert("Please enter email and password.");
+        alert("Please enter both email and password.");
         return;
       }
 
-      let res;
-      if (type === 'signup') {
-        res = await supabase.auth.signUp({ email, password });
-      } else {
-        res = await supabase.auth.signInWithPassword({ email, password });
-      }
+      try {
+        let res;
+        if (type === 'signup') {
+          res = await supabase.auth.signUp({ email, password });
+        } else {
+          res = await supabase.auth.signInWithPassword({ email, password });
+        }
 
-      if (res.error) {
-        alert(res.error.message);
-      } else {
-        alert(type === 'signup' ? "Account created! 10 Credits added." : "Logged in successfully!");
-        location.reload();
+        if (res.error) {
+          alert("Auth Error: " + res.error.message);
+        } else if (type === 'signup' && !res.data.session) {
+          alert("Sign-up successful! Check your email inbox to verify account.");
+        } else {
+          alert("Success! Logging in...");
+          location.reload();
+        }
+      } catch (err) {
+        alert("Unexpected Error: " + err.message);
       }
     }
 
@@ -197,7 +181,8 @@
 
     async function processVehicleTransfer() {
       if (!currentUserId) {
-        const modal = new bootstrap.Modal(document.getElementById('authModal'));
+        const modalElement = document.getElementById('authModal');
+        const modal = new bootstrap.Modal(modalElement);
         modal.show();
         return;
       }
@@ -215,14 +200,96 @@
         buyerRTO: document.getElementById('buyerRTO').value,
       };
 
-      if (!formData.regNo || !formData.sellerName || !formData.buyerName) {
-        alert("Please fill in all required fields.");
-        return;
-      }
-
       try {
         const newBalance = await executeCreditCheckAndDeduct(currentUserId, 1, 'PARIVAHAN_FORM_29_30', formData);
         document.getElementById('creditDisplay').innerText = `Credits: ${newBalance}`;
+        await generateForm29And30PDF(formData);
+        alert("Forms generated successfully! 1 Credit deducted.");
+      } catch (err) {
+        alert("Transaction Error: " + err.message);
+      }
+    }
+
+    async function executeCreditCheckAndDeduct(userId, cost, serviceCode, payload) {
+      const { data: profile, error } = await supabase
+        .from('profiles')
+        .select('credits_balance')
+        .eq('id', userId)
+        .single();
+
+      if (error || !profile) throw new Error("Unable to retrieve balance.");
+      if (profile.credits_balance < cost) throw new Error(`Insufficient credits!`);
+
+      const updatedCredits = profile.credits_balance - cost;
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ credits_balance: updatedCredits })
+        .eq('id', userId);
+
+      if (updateError) throw new Error("Failed to deduct credits.");
+
+      await supabase.from('service_logs').insert({
+        user_id: userId,
+        service_code: serviceCode,
+        credits_used: cost,
+        form_payload: payload
+      });
+
+      return updatedCredits;
+    }
+
+    async function generateForm29And30PDF(data) {
+      const { PDFDocument, StandardFonts, rgb } = PDFLib;
+      const pdfDoc = await PDFDocument.create();
+      const fontBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+      const fontRegular = await pdfDoc.embedFont(StandardFonts.Helvetica);
+
+      // Form 29 Page
+      const page1 = pdfDoc.addPage([595, 842]);
+      page1.drawText('FORM 29', { x: 260, y: 800, size: 16, font: fontBold });
+      page1.drawText('[See Rule 55(1)]', { x: 250, y: 785, size: 10, font: fontRegular });
+      page1.drawText('NOTICE OF TRANSFER OF OWNERSHIP OF A MOTOR VEHICLE', { x: 110, y: 765, size: 11, font: fontBold, color: rgb(0, 0.3, 0.6) });
+
+      let y = 720;
+      page1.drawText(`To: The Registering Authority, ${data.sellerRTO}`, { x: 50, y, size: 10, font: fontBold });
+      y -= 25;
+      page1.drawText(`I, ${data.sellerName}, residing at ${data.sellerAddress},`, { x: 50, y, size: 10, font: fontRegular });
+      y -= 15;
+      page1.drawText(`hereby give notice that I have transferred ownership of motor vehicle No. ${data.regNo}`, { x: 50, y, size: 10, font: fontRegular });
+      y -= 15;
+      page1.drawText(`Make/Model: ${data.makeModel} | Chassis No: ${data.chassisNo} | Engine No: ${data.engineNo}`, { x: 50, y, size: 9, font: fontRegular });
+      y -= 25;
+      page1.drawText(`To Shri/Smt: ${data.buyerName}`, { x: 50, y, size: 10, font: fontBold });
+      y -= 15;
+      page1.drawText(`Residing at: ${data.buyerAddress}`, { x: 50, y, size: 10, font: fontRegular });
+      y -= 50;
+      page1.drawText('Signature of Transferor (Seller): _______________________', { x: 50, y, size: 9, font: fontBold });
+
+      // Form 30 Page
+      const page2 = pdfDoc.addPage([595, 842]);
+      page2.drawText('FORM 30', { x: 260, y: 800, size: 16, font: fontBold });
+      page2.drawText('[See Rule 55(2)]', { x: 250, y: 785, size: 10, font: fontRegular });
+      page2.drawText('APPLICATION FOR INTIMATION AND TRANSFER OF OWNERSHIP', { x: 100, y: 765, size: 11, font: fontBold, color: rgb(0, 0.3, 0.6) });
+
+      y = 720;
+      page2.drawText(`To: The Registering Authority, ${data.buyerRTO}`, { x: 50, y, size: 10, font: fontBold });
+      y -= 25;
+      page2.drawText(`I, ${data.buyerName}, residing at ${data.buyerAddress},`, { x: 50, y, size: 10, font: fontRegular });
+      y -= 15;
+      page2.drawText(`hereby declare that I have acquired vehicle registration No. ${data.regNo} from ${data.sellerName}.`, { x: 50, y, size: 10, font: fontRegular });
+      y -= 50;
+      page2.drawText('Signature of Transferee (Buyer): _______________________', { x: 50, y, size: 9, font: fontBold });
+
+      const pdfBytes = await pdfDoc.save();
+      const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = `Form_29_30_${data.regNo}.pdf`;
+      link.click();
+    }
+  </script>
+</body>
+</html>
         await generateForm29And30PDF(formData);
         alert("Forms generated! 1 Credit deducted.");
       } catch (err) {
