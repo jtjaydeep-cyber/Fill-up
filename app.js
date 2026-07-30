@@ -1,5 +1,5 @@
 // 1. Initialize Supabase
-const SUPABASE_URL = 'YOUR_SUPABASE_URL';
+const SUPABASE_URL = 'https://eocxrlmidikrxfpghzwl.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVvY3hybG1pZGlrcnhmcGdoendsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUzODkxOTIsImV4cCI6MjEwMDk2NTE5Mn0.a5lkA3HIsd1Mh7pEJljoL1UN_jk7HE_ddcQ4wSvpiKs';
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
