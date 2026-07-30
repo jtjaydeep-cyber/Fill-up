@@ -10,6 +10,85 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <!-- PDF-Lib CDN -->
   <script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
+  async function generateRentalPDF() {
+  const formData = {
+    landlordName: document.getElementById('landlordName').value,
+    landlordFather: document.getElementById('landlordFather').value,
+    landlordAddress: document.getElementById('landlordAddress').value,
+    tenantName: document.getElementById('tenantName').value,
+    tenantFather: document.getElementById('tenantFather').value,
+    tenantAadhaar: document.getElementById('tenantAadhaar').value,
+    propertyAddress: document.getElementById('propertyAddress').value,
+    monthlyRent: document.getElementById('monthlyRent').value,
+    depositAmount: document.getElementById('depositAmount').value,
+    startDate: document.getElementById('startDate').value
+  };
+
+  try {
+    // 1. Execute Credit Guard (Cost: 1 Credit)
+    await executeService(currentUserId, 'RENTAL_AGREEMENT_11M', 1, formData);
+
+    // 2. Build PDF Document
+    const { PDFDocument, StandardFonts, rgb } = PDFLib;
+    const pdfDoc = await PDFDocument.create();
+    const page = pdfDoc.addPage([595, 842]); // A4 Size
+    const fontBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+    const fontRegular = await pdfDoc.embedFont(StandardFonts.Helvetica);
+
+    // Header
+    page.drawText('RENTAL AGREEMENT', { x: 210, y: 800, size: 16, font: fontBold, color: rgb(0, 0.2, 0.6) });
+    page.drawText('(11-Month Residential Lease)', { x: 220, y: 785, size: 10, font: fontRegular });
+
+    // Clause Body
+    let y = 740;
+    const lineHeight = 18;
+
+    page.drawText(`This agreement is made on ${formData.startDate} between:`, { x: 50, y, size: 10, font: fontRegular });
+    y -= lineHeight;
+
+    page.drawText(`LANDLORD: ${formData.landlordName}, S/o ${formData.landlordFather}`, { x: 50, y, size: 10, font: fontBold });
+    y -= lineHeight;
+    page.drawText(`Residing at: ${formData.landlordAddress}`, { x: 50, y, size: 9, font: fontRegular });
+    y -= lineHeight * 1.5;
+
+    page.drawText(`TENANT: ${formData.tenantName}, S/o ${formData.tenantFather}`, { x: 50, y, size: 10, font: fontBold });
+    y -= lineHeight;
+    page.drawText(`Aadhaar No: ${formData.tenantAadhaar}`, { x: 50, y, size: 9, font: fontRegular });
+    y -= lineHeight * 2;
+
+    // Terms & Conditions
+    page.drawText('TERMS AND CONDITIONS:', { x: 50, y, size: 11, font: fontBold });
+    y -= lineHeight;
+    page.drawText(`1. PREMISES: Rented property located at ${formData.propertyAddress}.`, { x: 50, y, size: 9, font: fontRegular });
+    y -= lineHeight;
+    page.drawText(`2. RENT: Tenant agrees to pay a monthly rent of Rs. ${formData.monthlyRent}/-`, { x: 50, y, size: 9, font: fontRegular });
+    y -= lineHeight;
+    page.drawText(`3. SECURITY DEPOSIT: Tenant has deposited Rs. ${formData.depositAmount}/- as interest-free deposit.`, { x: 50, y, size: 9, font: fontRegular });
+    y -= lineHeight;
+    page.drawText(`4. DURATION: Valid for 11 months starting from ${formData.startDate}.`, { x: 50, y, size: 9, font: fontRegular });
+    
+    // Signatures Area
+    y -= lineHeight * 4;
+    page.drawText('________________________', { x: 50, y, size: 10, font: fontRegular });
+    page.drawText('________________________', { x: 380, y, size: 10, font: fontRegular });
+    y -= 15;
+    page.drawText('Signature of Landlord', { x: 50, y, size: 9, font: fontBold });
+    page.drawText('Signature of Tenant', { x: 380, y, size: 9, font: fontBold });
+
+    const pdfBytes = await pdfDoc.save();
+
+    // Trigger Download
+    const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `Rent_Agreement_${formData.tenantName}.pdf`;
+    link.click();
+
+    alert("Rental Agreement generated! 1 Credit deducted.");
+  } catch (err) {
+    alert(err.message);
+  }
+}
 </head>
 <body class="bg-light p-3">
 
