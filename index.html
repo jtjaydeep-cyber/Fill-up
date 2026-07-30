@@ -97,14 +97,18 @@
   <script>
     const SUPABASE_URL = 'https://eocxrlmidikrxfpghzwl.supabase.co';
     
-    // ⚠️ REPLACE THIS STRING WITH YOUR REAL SUPABASE ANON KEY (starts with eyJ...)
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVvY3hybG1pZGlrcnhmcGdoendsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUzODkxOTIsImV4cCI6MjEwMDk2NTE5Mn0.a5lkA3HIsd1Mh7pEJljoL1UN_jk7HE_ddcQ4wSvpiKs';
+    // ⚠️ PASTE YOUR REAL ANON KEY FROM SUPABASE DASHBOARD BELOW:
+    const SUPABASE_ANON_KEY = 'YOUR_ACTUAL_SUPABASE_ANON_KEY_HERE';
 
     let supabase;
     let currentUserId = null;
 
     window.addEventListener('load', async () => {
       try {
+        if (SUPABASE_ANON_KEY === 'YOUR_ACTUAL_SUPABASE_ANON_KEY_HERE') {
+          console.warn('Supabase key not configured yet.');
+          return;
+        }
         supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         await checkUserSession();
       } catch (err) {
@@ -113,6 +117,7 @@
     });
 
     async function checkUserSession() {
+      if (!supabase) return;
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
         currentUserId = user.id;
@@ -131,8 +136,16 @@
     }
 
     async function handleAuth(type) {
-      const email = document.getElementById('authEmail').value.trim();
-      const password = document.getElementById('authPassword').value;
+      if (!supabase) {
+        alert("Supabase is not initialized. Please ensure your ANON key is set in index.html.");
+        return;
+      }
+
+      const emailInput = document.getElementById('authEmail');
+      const passwordInput = document.getElementById('authPassword');
+
+      const email = emailInput ? emailInput.value.trim() : '';
+      const password = passwordInput ? passwordInput.value : '';
 
       if (!email || !password) {
         alert("Please enter both email and password.");
@@ -156,8 +169,10 @@
     }
 
     async function handleLogout() {
-      await supabase.auth.signOut();
-      location.reload();
+      if (supabase) {
+        await supabase.auth.signOut();
+        location.reload();
+      }
     }
 
     async function fetchCreditBalance(userId) {
